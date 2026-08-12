@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>NewsSearch API Playground</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+
+        :root {
+            --primary-color: #10B981;
+            --secondary-color: #059669;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .playground-card {
+            box-shadow:
+                0 4px 6px -1px rgba(0, 0, 0, 0.1),
+                0 2px 4px -2px rgba(0, 0, 0, 0.06);
+
+            border-radius: 0.75rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            transition: background-color 0.15s;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: var(--secondary-color);
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+
+        }
+
+        #json-output {
+            overflow-x: auto;
+            min-height: 400px;
+        }
+
+        .result-card {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                0 8px 12px -3px rgba(0, 0, 0, 0.08);
+        }
+
+    </style>
+
+</head>
+
+
+<body class="p-4 md:p-8 min-h-screen">
+
+
+    <div class="max-w-6xl mx-auto">
+
+
+        <!-- =====================================================
+             HEADER
+        ====================================================== -->
+
+        <header
+            class="bg-white p-4 rounded-xl playground-card mb-8
+                   flex items-center justify-between
+                   border-b border-gray-200">
+
+            <h1 class="text-2xl font-bold text-gray-800">
+
+                <span class="text-green-500">
+                    NewsSearch
+                </span>
+
+                API Playground
+
+            </h1>
+
+
+            <div class="text-sm text-gray-500 hidden sm:block">
+
+                Powered by SerpApi & FastAPI
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =====================================================
+             MAIN GRID
+        ====================================================== -->
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+
+            <!-- =================================================
+                 LEFT PANEL
+            ================================================== -->
+
+            <div class="lg:col-span-1 space-y-6">
+
+
+                <!-- SEARCH QUERY -->
+
+                <div class="bg-white p-6 rounded-xl playground-card">
+
+                    <h2
+                        class="text-xl font-semibold mb-4 text-gray-700
+                               border-b pb-2">
+
+                        Search Query
+
+                    </h2>
+
+
+                    <label
+                        for="search-query"
+                        class="block text-sm font-medium
+                               text-gray-600 mb-2">
+
+                        <span
+                            class="font-mono bg-gray-100 p-1 rounded text-xs">
+
+                            q
+
+                        </span>
+
+                        Search Topic
+
+                    </label>
+
+
+                    <input
+                        type="text"
+                        id="search-query"
+                        placeholder="e.g., artificial intelligence"
+                        value="Artificial Intelligence"
+                        class="w-full p-3 border border-gray-300
+                               rounded-lg focus:ring-green-500
+                               focus:border-green-500
+                               text-base mb-4">
+
+
+                    <button
+                        id="search-button"
+                        class="btn-primary text-white font-semibold
+                               w-full py-3 rounded-lg
+                               flex items-center justify-center
+                               disabled:opacity-50"
+                        onclick="startNewsSearch()">
+
+                        <span id="button-text">
+                            Search News
+                        </span>
+
+                        <div
+                            id="loader"
+                            class="loader ml-3 hidden">
+                        </div>
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- LOCALIZATION -->
+
+                <div class="bg-white p-6 rounded-xl playground-card">
+
+                    <h2
+                        class="text-xl font-semibold mb-4 text-gray-700
+                               border-b pb-2">
+
+                        Localization
+
+                    </h2>
+
+
+                    <label
+                        for="country-select"
+                        class="block text-sm font-medium
+                               text-gray-600 mb-2">
+
+                        <span
+                            class="font-mono bg-gray-100 p-1 rounded text-xs">
+
+                            gl
+
+                        </span>
+
+                        Country
+
+                    </label>
+
+
+                    <select
+                        id="country-select"
+                        class="w-full p-3 border border-gray-300
+                               rounded-lg focus:ring-green-500
+                               focus:border-green-500 text-base">
+
+                        <!-- Options populated by JavaScript -->
+
+                    </select>
+
+
+                    <p class="text-xs text-gray-500 mt-2">
+
+                        Determines the geographic context used for
+                        the news search.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- LANGUAGE -->
+
+                <div class="bg-white p-6 rounded-xl playground-card">
+
+                    <h2
+                        class="text-xl font-semibold mb-4 text-gray-700
+                               border-b pb-2">
+
+                        Language
+
+                    </h2>
+
+
+                    <label
+                        for="language-select"
+                        class="block text-sm font-medium
+                               text-gray-600 mb-2">
+
+                        <span
+                            class="font-mono bg-gray-100 p-1 rounded text-xs">
+
+                            hl
+
+                        </span>
+
+                        Language
+
+                    </label>
+
+
+                    <select
+                        id="language-select"
+                        class="w-full p-3 border border-gray-300
+                               rounded-lg focus:ring-green-500
+                               focus:border-green-500 text-base">
+
+                        <option value="en" selected>
+                            English (en)
+                        </option>
+
+                        <option value="hi">
+                            Hindi (hi)
+                        </option>
+
+                        <option value="fr">
+                            French (fr)
+                        </option>
+
+                        <option value="de">
+                            German (de)
+                        </option>
+
+                        <option value="es">
+                            Spanish (es)
+                        </option>
+
+                        <option value="ja">
+                            Japanese (ja)
+                        </option>
+
+                    </select>
+
+
+                    <p class="text-xs text-gray-500 mt-2">
+
+                        Controls the language context of the search.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- API NOTE -->
+
+                <div
+                    class="bg-green-50 p-4 rounded-xl
+                           border border-green-200
+                           text-sm text-green-800">
+
+                    <p class="font-semibold mb-1">
+
+                        API Note:
+
+                    </p>
+
+                    <p>
+
+                        Searches are processed through a FastAPI
+                        backend and retrieved using the configured
+                        SerpApi search service.
+
+                    </p>
+
+                </div>
+
+
+            </div>
+
+
+
+            <!-- =================================================
+                 RIGHT PANEL
+            ================================================== -->
+
+            <div class="lg:col-span-2">
+
+
+                <h2
+                    class="text-xl font-semibold mb-4 text-gray-700
+                           border-b pb-2">
+
+                    Structured News Results
+
+                </h2>
+
+
+                <div
+                    id="results-container"
+                    class="bg-gray-800 p-4 rounded-xl
+                           h-full min-h-[400px]
+                           overflow-hidden">
+
+                    <pre
+                        id="json-output"
+                        class="text-green-300 text-sm
+                               whitespace-pre-wrap">
+
+{
+    "status": "Ready",
+    "message": "Enter a topic and select a country to begin the news search. Results will appear here in structured JSON format."
+}
+
+                    </pre>
+
+                </div>
+
+            </div>
+
+
+        </div>
+
+
+        <!-- =====================================================
+             PROJECT DESCRIPTION
+        ====================================================== -->
+
+        <div
+            class="mt-10 bg-white p-6 rounded-xl
+                   playground-card border border-gray-200">
+
+            <h2
+                class="text-xl font-semibold text-gray-700 mb-3">
+
+                About NewsSearch
+
+            </h2>
+
+
+            <p class="text-gray-600 text-sm leading-7">
+
+                NewsSearch is a lightweight API playground for
+                retrieving structured news information based on
+                user-defined search queries.
+
+                The application combines a browser-based interface
+                with a FastAPI backend and an external search API.
+                Users can specify a topic, geographic location and
+                language, while the backend processes the request
+                and returns structured JSON results.
+
+            </p>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================== -->
+
+    <script>
+
+
+        // ========================================================
+        // API CONFIGURATION
+        // ========================================================
+
+        const API_ENDPOINT =
+            "http://127.0.0.1:8000/api/news-search";
+
+
+
+        // ========================================================
+        // ELEMENT REFERENCES
+        // ========================================================
+
+        const button =
+            document.getElementById("search-button");
+
+        const buttonText =
+            document.getElementById("button-text");
+
+        const loader =
+            document.getElementById("loader");
+
+        const queryInput =
+            document.getElementById("search-query");
+
+        const countrySelect =
+            document.getElementById("country-select");
+
+        const languageSelect =
+            document.getElementById("language-select");
+
+        const jsonOutput =
+            document.getElementById("json-output");
+
+
+
+        // ========================================================
+        // COUNTRY OPTIONS
+        // ========================================================
+
+        const COUNTRIES = [
+
+            {
+                name: "United States (us)",
+                code: "us"
+            },
+
+            {
+                name: "United Kingdom (uk)",
+                code: "uk"
+            },
+
+            {
+                name: "Canada (ca)",
+                code: "ca"
+            },
+
+            {
+                name: "Australia (au)",
+                code: "au"
+            },
+
+            {
+                name: "Germany (de)",
+                code: "de"
+            },
+
+            {
+                name: "Japan (jp)",
+                code: "jp"
+            },
+
+            {
+                name: "India (in)",
+                code: "in"
+            },
+
+            {
+                name: "France (fr)",
+                code: "fr"
+            },
+
+            {
+                name: "Brazil (br)",
+                code: "br"
+            },
+
+            {
+                name: "Mexico (mx)",
+                code: "mx"
+            }
+
+        ];
+
+
+
+        // ========================================================
+        // COUNTRY SELECTOR
+        // ========================================================
+
+        function setupCountrySelector() {
+
+            COUNTRIES.forEach(country => {
+
+                const option =
+                    document.createElement("option");
+
+                option.value =
+                    country.code;
+
+                option.textContent =
+                    country.name;
+
+                if (country.code === "us") {
+
+                    option.selected = true;
+
+                }
+
+                countrySelect.appendChild(option);
+
+            });
+
+        }
+
+
+
+        // ========================================================
+        // EXPONENTIAL BACKOFF FETCH
+        // ========================================================
+
+        async function exponentialBackoffFetch(
+            url,
+            options,
+            retries = 3
+        ) {
+
+            try {
+
+                const response =
+                    await fetch(url, options);
+
+
+                // ------------------------------------------------
+                // HANDLE SERVER / RATE LIMIT ERRORS
+                // ------------------------------------------------
+
+                if (!response.ok) {
+
+                    if (
+                        (
+                            response.status === 429 ||
+                            response.status >= 500
+                        )
+                        &&
+                        retries > 0
+                    ) {
+
+                        const delay =
+                            Math.pow(
+                                2,
+                                3 - retries
+                            ) * 1000
+                            +
+                            Math.random() * 500;
+
+
+                        await new Promise(
+                            resolve =>
+                                setTimeout(
+                                    resolve,
+                                    delay
+                                )
+                        );
+
+
+                        return exponentialBackoffFetch(
+                            url,
+                            options,
+                            retries - 1
+                        );
+
+                    }
+
+
+                    // --------------------------------------------
+                    // NON-RETRYABLE ERROR
+                    // --------------------------------------------
+
+                    const errorDetail =
+                        await response
+                            .json()
+                            .catch(
+                                () => ({
+                                    detail:
+                                        response.statusText
+                                })
+                            );
+
+
+                    throw new Error(
+                        `API call failed with status ` +
+                        `${response.status}: ` +
+                        `${errorDetail.detail}`
+                    );
+
+                }
+
+
+                return response;
+
+            }
+
+
+            catch (error) {
+
+
+                // ------------------------------------------------
+                // RETRY NETWORK FAILURES
+                // ------------------------------------------------
+
+                if (
+                    retries > 0 &&
+                    error.message.includes(
+                        "Failed to fetch"
+                    )
+                ) {
+
+                    const delay =
+                        Math.pow(
+                            2,
+                            3 - retries
+                        ) * 1000
+                        +
+                        Math.random() * 500;
+
+
+                    await new Promise(
+                        resolve =>
+                            setTimeout(
+                                resolve,
+                                delay
+                            )
+                    );
+
+
+                    return exponentialBackoffFetch(
+                        url,
+                        options,
+                        retries - 1
+                    );
+
+                }
+
+
+                throw error;
+
+            }
+
+        }
+
+
+
+        // ========================================================
+        // MAIN NEWS SEARCH FUNCTION
+        // ========================================================
+
+        async function startNewsSearch() {
+
+
+            // ----------------------------------------------------
+            // READ USER INPUT
+            // ----------------------------------------------------
+
+            const query =
+                queryInput.value.trim();
+
+            const countryCode =
+                countrySelect.value;
+
+            const languageCode =
+                languageSelect.value;
+
+
+
+            // ----------------------------------------------------
+            // VALIDATE QUERY
+            // ----------------------------------------------------
+
+            if (!query) {
+
+                jsonOutput.textContent =
+                    JSON.stringify(
+                        {
+                            status: "Error",
+
+                            message:
+                                "Please enter a search topic."
+                        },
+                        null,
+                        2
+                    );
+
+                return;
+
+            }
+
+
+
+            // ----------------------------------------------------
+            // LOADING STATE
+            // ----------------------------------------------------
+
+            button.disabled = true;
+
+            buttonText.textContent =
+                "Searching...";
+
+            loader.classList.remove(
+                "hidden"
+            );
+
+
+            jsonOutput.textContent =
+                JSON.stringify(
+                    {
+                        status: "Loading",
+
+                        message:
+                            `Fetching news for ` +
+                            `'${query}' in ` +
+                            `${countryCode.toUpperCase()}...`
+                    },
+                    null,
+                    2
+                );
+
+
+
+            try {
+
+
+                // ------------------------------------------------
+                // CONSTRUCT API URL
+                // ------------------------------------------------
+
+                const fullUrl =
+                    `${API_ENDPOINT}` +
+                    `?query=${encodeURIComponent(query)}` +
+                    `&gl=${encodeURIComponent(countryCode)}` +
+                    `&hl=${encodeURIComponent(languageCode)}`;
+
+
+
+                // ------------------------------------------------
+                // CALL FASTAPI
+                // ------------------------------------------------
+
+                const response =
+                    await exponentialBackoffFetch(
+                        fullUrl,
+                        {
+                            method: "GET"
+                        }
+                    );
+
+
+                const data =
+                    await response.json();
+
+
+
+                // ------------------------------------------------
+                // DISPLAY STRUCTURED RESPONSE
+                // ------------------------------------------------
+
+                jsonOutput.textContent =
+                    JSON.stringify(
+                        data,
+                        null,
+                        2
+                    );
+
+            }
+
+
+            catch (error) {
+
+
+                console.error(
+                    "News search failed:",
+                    error
+                );
+
+
+                // ------------------------------------------------
+                // DISPLAY ERROR
+                // ------------------------------------------------
+
+                const errorData = {
+
+                    status: "API Error",
+
+                    query: query,
+
+                    country:
+                        countryCode,
+
+                    language:
+                        languageCode,
+
+                    message:
+                        error.message ||
+                        "An unknown error occurred. " +
+                        "Check whether the FastAPI backend " +
+                        "is running on http://127.0.0.1:8000."
+
+                };
+
+
+                jsonOutput.textContent =
+                    JSON.stringify(
+                        errorData,
+                        null,
+                        2
+                    );
+
+            }
+
+
+            finally {
+
+
+                // ------------------------------------------------
+                // RESTORE UI
+                // ------------------------------------------------
+
+                button.disabled = false;
+
+                buttonText.textContent =
+                    "Search News";
+
+                loader.classList.add(
+                    "hidden"
+                );
+
+            }
+
+        }
+
+
+
+        // ========================================================
+        // ENTER KEY SUPPORT
+        // ========================================================
+
+        queryInput.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (event.key === "Enter") {
+
+                    startNewsSearch();
+
+                }
+
+            }
+        );
+
+
+
+        // ========================================================
+        // INITIALIZE
+        // ========================================================
+
+        window.onload =
+            setupCountrySelector;
+
+
+    </script>
+
+
+</body>
+
+</html>
